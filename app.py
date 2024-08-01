@@ -219,7 +219,7 @@ with tab4:
                     {"role": "user", "content": one_shot_prompt},
                     {"role": "assistant", "content": one_shot_prompt}
                 ],
-                max_tokens=150
+                max_tokens=1024
             )
         message = completions.choices[0].message['content']
         return message
