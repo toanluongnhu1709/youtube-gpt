@@ -221,7 +221,7 @@ with tab4:
                 ],
                 max_tokens=150
             )
-        message = response.choices[0].message['content']
+        message = completions.choices[0].message['content']
         return message
 
     if user_input:
