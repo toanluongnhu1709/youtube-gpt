@@ -2,8 +2,9 @@ import pandas as pd
 import numpy as np
 import streamlit as st
 import whisper
-import pytube
-from pytube import YouTube
+#import pytube #error 400 bad request
+import pytubefix
+from pytubefix import YouTube
 from streamlit_chat import message
 import openai
 from openai.embeddings_utils import get_embedding, distances_from_embeddings
@@ -33,74 +34,74 @@ array = []
 
 # Uncomment this section if you want to upload your own video
 # Sidebar
-# with st.sidebar:
-#     user_secret = st.text_input(label = ":blue[OpenAI API key]",
-#                                 value="",
-#                                 placeholder = "Paste your openAI API key, sk-",
-#                                 type = "password")
-#     youtube_link = st.text_input(label = ":red[Youtube link]",
-#                                 value="https://youtu.be/rQeXGvFAJDQ",
-#                                 placeholder = "")
-#     if youtube_link and user_secret:
-#         youtube_video = YouTube(youtube_link)
-#         video_id = pytube.extract.video_id(youtube_link)
-#         streams = youtube_video.streams.filter(only_audio=True)
-#         stream = streams.first()
-#         if st.button("Start Analysis"):
-#             if os.path.exists("word_embeddings.csv"):
-#                 os.remove("word_embeddings.csv")
+with st.sidebar:
+    user_secret = st.text_input(label = ":blue[OpenAI API key]",
+                                value="",
+                                placeholder = "Paste your openAI API key, sk-", 
+                                type = "password")
+    youtube_link = st.text_input(label = ":red[Youtube link]",
+                                value="https://youtu.be/rQeXGvFAJDQ",
+                                placeholder = "")
+    if youtube_link and user_secret:
+        youtube_video = YouTube(youtube_link)
+        video_id = pytubefix.extract.video_id(youtube_link)
+        streams = youtube_video.streams.filter(only_audio=True)
+        stream = streams.first()
+        if st.button("Start Analysis"):
+            if os.path.exists("word_embeddings.csv"):
+                os.remove("word_embeddings.csv")
                 
-#             with st.spinner('Running process...'):
-#                 # Get the video mp4
-#                 mp4_video = stream.download(filename='youtube_video.mp4')
-#                 audio_file = open(mp4_video, 'rb')
-#                 st.write(youtube_video.title)
-#                 st.video(youtube_link) 
+            with st.spinner('Running process...'):
+                # Get the video mp4
+                mp4_video = stream.download(filename='youtube_video.mp4')
+                audio_file = open(mp4_video, 'rb')
+                st.write(youtube_video.title)
+                st.video(youtube_link) 
 
-#                 # Whisper
-#                 output = model.transcribe("youtube_video.mp4")
+                # Whisper
+                output = model.transcribe("youtube_video.mp4")
                 
-#                 # Transcription
-#                 transcription = {
-#                     "title": youtube_video.title.strip(),
-#                     "transcription": output['text']
-#                 }
-#                 data_transcription.append(transcription)
-#                 pd.DataFrame(data_transcription).to_csv('transcription.csv') 
-#                 segments = output['segments']
+                # Transcription
+                transcription = {
+                    "title": youtube_video.title.strip(),
+                    "transcription": output['text']
+                }
+                data_transcription.append(transcription)
+                pd.DataFrame(data_transcription).to_csv('transcription.csv') 
+                segments = output['segments']
 
-#                 # Pinacone index
-#                 # check if index_name index already exists (only create index if not)
-#                 # index_name = str(video_id)
-#                 # # check if 'index_name' index already exists (only create index if not)
-#                 # if 'index1' not in pinecone.list_indexes():
-#                 #     pinecone.create_index('index1', dimension=len(segments))
-#                 # # connect to index
-#                 # index = pinecone.Index('index1')
+                # Pinacone index
+                # check if index_name index already exists (only create index if not)
+                # index_name = str(video_id)
+                # # check if 'index_name' index already exists (only create index if not)
+                # if 'index1' not in pinecone.list_indexes():
+                #     pinecone.create_index('index1', dimension=len(segments))
+                # # connect to index
+                # index = pinecone.Index('index1')
                 
-#                 #st.write(segments)
-#                 #Embeddings
-#                 for segment in segments:
-#                     openai.api_key = user_secret
-#                     response = openai.Embedding.create(
-#                         input= segment["text"].strip(),
-#                         model="text-embedding-ada-002"
-#                     )
-#                     embeddings = response['data'][0]['embedding']
-#                     meta = {
-#                         "text": segment["text"].strip(),
-#                         "start": segment['start'],
-#                         "end": segment['end'],
-#                         "embedding": embeddings
-#                     }
-#                     data.append(meta)
-#                 # upsert_response = index.upsert(
-#                 #         vectors=data,
-#                 #         namespace=video_id
-#                 #     )
-#                 pd.DataFrame(data).to_csv('word_embeddings.csv') 
-#                 os.remove("youtube_video.mp4")
-#                 st.success('Analysis completed')
+                #st.write(segments)
+                #Embeddings
+                for segment in segments:
+                    openai.api_key = user_secret
+                    response = openai.Embedding.create(
+                        input= segment["text"].strip(),
+                        model="text-embedding-ada-002"
+                    )
+                    embeddings = response['data'][0]['embedding']
+                    meta = {
+                        "text": segment["text"].strip(),
+                        "start": segment['start'],
+                        "end": segment['end'],
+                        "embedding": embeddings
+                    }
+                    data.append(meta)
+                # upsert_response = index.upsert(
+                #         vectors=data,
+                #         namespace=video_id
+                #     )
+                pd.DataFrame(data).to_csv('word_embeddings.csv') 
+                os.remove("youtube_video.mp4")
+                st.success('Analysis completed')
 
 st.markdown('<h1>Youtube GPT 🤖<small> by <a href="https://codegpt.co">Code GPT</a></small></h1>', unsafe_allow_html=True)
 st.write("Start a chat with this video of Microsoft CEO Satya Nadella's interview. You just need to add your OpenAI API Key and paste it in the 'Chat with the video' tab.")
@@ -117,7 +118,7 @@ _, container, _ = st.columns([side, 47, side])
 container.video(data=VIDEO_DATA)
 tab1, tab2, tab3, tab4 = st.tabs(["Intro", "Transcription", "Embedding", "Chat with the Video"])
 with tab1:
-    st.markdown("### How does it work?")
+    st.markdown("### How does it workk?")
     st.markdown('Read the article to know how it works: [Medium Article]("https://medium.com/@dan.avila7/youtube-gpt-start-a-chat-with-a-video-efe92a499e60")')
     st.write("Youtube GPT was written with the following tools:")
     st.markdown("#### Code GPT")
@@ -151,7 +152,8 @@ with tab3:
 with tab4:
     user_secret = st.text_input(label = ":blue[OpenAI API key]",
                                 placeholder = "Paste your openAI API key, sk-",
-                                type = "password")
+                                type = "password",
+                                key="user_secret")
     st.write('To obtain an API Key you must create an OpenAI account at the following link: https://openai.com/api/')
     if 'generated' not in st.session_state:
         st.session_state['generated'] = []
@@ -194,7 +196,7 @@ with tab4:
         Q: '''+prompt+'''
         A: '''
         completions = openai.Completion.create(
-            engine = "text-davinci-003",
+            engine = "gpt-3.5-turbo", #engine = "text-davinci-003",#InvalidRequestError: The model `text-davinci-003` has been deprecated, learn more here: https://platform.openai.com/docs/deprecations
             prompt = one_shot_prompt,
             max_tokens = 1024,
             n = 1,
@@ -204,13 +206,31 @@ with tab4:
         message = completions.choices[0].text
         return message
 
+    def generate_response_new_gpt_version(api_key, prompt):
+        one_shot_prompt = '''I am YoutubeGPT, a highly intelligent question answering bot. If you ask me a question that is rooted in truth, I will give you the answer.
+        Q: What is human life expectancy in the United States?
+        A: Human life expectancy in the United States is 78 years.
+        Q: '''+prompt+'''
+        A: '''
+        completions = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": one_shot_prompt},
+                    {"role": "user", "content": one_shot_prompt},
+                    {"role": "assistant", "content": one_shot_prompt}
+                ],
+                max_tokens=150
+            )
+        message = response.choices[0].message['content']
+        return message
+
     if user_input:
         text_embedding = get_embedding_text(user_secret, user_input)
         title = pd.read_csv('transcription.csv')['title']
         string_title = "\n\n###\n\n".join(title)
         user_input_embedding = 'Using this context: "'+string_title+'. '+text_embedding+'", answer the following question. \n'+user_input
         # st.write(user_input_embedding)
-        output = generate_response(user_secret, user_input_embedding)
+        output = generate_response_new_gpt_version(user_secret, user_input_embedding)
         st.session_state.past.append(user_input)
         st.session_state.generated.append(output)
     if st.session_state['generated']:
